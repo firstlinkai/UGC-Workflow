@@ -1,0 +1,1598 @@
+{
+  "name": "UGC",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "UGC Form",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Product Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Angle Required",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Hashtag",
+              "placeholder": "Make sure it Exists on tiktok",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -640,
+        544
+      ],
+      "id": "d462314c-b04b-4bfb-a485-57dff7011946",
+      "name": "On form submission1",
+      "webhookId": "6b86a0eb-756f-4ba3-8a52-672c404e9c8d"
+    },
+    {
+      "parameters": {
+        "model": "qwen/qwen3-32b:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        400,
+        688
+      ],
+      "id": "80fbe8d2-b415-40bf-81a9-09b4e2017105",
+      "name": "OpenRouter Chat Model3",
+      "credentials": {
+        "openRouterApi": {
+          "id": "jeGKhu3CjhlRfkt9",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "qwen/qwen-turbo",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        688
+      ],
+      "id": "f0f99fa2-a111-4b74-b49e-06738a3679d8",
+      "name": "OpenRouter Chat Model4",
+      "credentials": {
+        "openRouterApi": {
+          "id": "jeGKhu3CjhlRfkt9",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"productDescription\": \"...\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -16,
+        688
+      ],
+      "id": "0bd8828d-58ad-4611-ba6b-e89478c9b434",
+      "name": "Structured Output Parser3"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n    \"Ads\": [\n    {\n      \"angle\": \"Name of the angle here\",\n      \"script\": \"The full UGC video script here.\",\n      \"caption\": \"The full UGC video Caption here.\",\n      \"scene\": \"Suggested video setting or background\",\n      \"avatarStyle\": \"Suggested avatar type and voice tone\"\n    }\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        592,
+        688
+      ],
+      "id": "c6be7eaa-b3fa-46e4-82cc-c79d3ff82888",
+      "name": "Structured Output Parser4"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output.Ads",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        960,
+        432
+      ],
+      "id": "3d4ca36a-4b97-459a-8ce4-44b9ed12d507",
+      "name": "Split Out1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a senior marketing copywriter and video ad strategist, specialized in crafting short, persuasive, and authentic UGC-style video scripts for platforms like TikTok, Instagram, and Facebook.\n\nYour goal is to write multiple short video ad scripts (30–45 seconds each) from different marketing angles, tailored for the following product:\n\nProduct Name: {{ $('Input1').item.json['Product Name'] }}\nProduct Description: {{ $json.output.productDescription }}\n\nHere is a list of potential marketing angles:\n- Emotional benefit\n- Functional benefit\n- Social proof\n- Scarcity/Urgency\n- Aspirational lifestyle\n- Problem/Solution\n- Authority/Expert testimonial\n- Unique Mechanism\n- Time-saving\n- Cost-saving\n\n### Step 1:\nBased on the product description, intelligently choose the {{ $('Input1').item.json.Angles }} most relevant and high-converting angles from the list above.\n\nOnly Stick with {{ $('Input1').item.json.Angles }} Angles!\n\n### Step 2:\nFor each selected angle, write one short **UGC-style video ad script** (30–45 seconds) tailored to that angle. The script should:\n- Sound like a real, unscripted person sharing their experience\n- Include specific, relatable details and emotional storytelling\n- Be informal, energetic, and engaging \n- End with a **soft call-to-action** (e.g. “trust me, just get it” / “link’s in my bio” / “you won’t regret it”)\n\n### Step 3:\nFor each script, recommend a fitting:\n- **Scene** description (for video background or setting)\n- **Avatar style** (e.g. “Mid-30s fitness coach, male, enthusiastic voice”)\n\n### Step 3:\nFor each video Write A caption:\n- make sure to involve emojis and Hashtags (2-3 per video)\n",
+        "hasOutputParser": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        400,
+        448
+      ],
+      "id": "884de731-a083-49c3-8fc4-16569f544c72",
+      "name": "Voice Over Script + Ad Copy1",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Search TikTok to check if the product named \"{{ $('Input1').item.json['Product Name'] }}\" has content or trends associated with it.\n\nIf content is found, generate **exactly one** short product description (2–3 sentences) that explains:\n- What the product does,\n- Its purpose,\n- Who it’s for.\n\nRespond only with a single JSON object in the following format. Do not include any other text, comments, or multiple entries.\n\n{\n  \"productDescription\": \"...\"\n}",
+        "hasOutputParser": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        -224,
+        464
+      ],
+      "id": "df0c39cf-9f77-4fc7-8228-b829d1053351",
+      "name": "Product Description1",
+      "retryOnFail": true,
+      "waitBetweenTries": 3000,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "model": "qwen/qwen-plus",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1312,
+        672
+      ],
+      "id": "986e4211-7c63-4fab-9a12-91e2459820b3",
+      "name": "OpenRouter Chat Model5",
+      "credentials": {
+        "openRouterApi": {
+          "id": "jeGKhu3CjhlRfkt9",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "57f9fb7b-0d7d-44ad-9349-5f8401dac761",
+              "name": "output.response[0]['template id']",
+              "value": "={{ $json.output.matchedAvatar[0]['template id'] }}",
+              "type": "string"
+            },
+            {
+              "id": "377818bf-3053-448d-8645-ce87177186b0",
+              "name": "output.response[0]['voice id']",
+              "value": "={{ $json.output.matchedAvatar[0]['voice id'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1680,
+        432
+      ],
+      "id": "5725eefc-ac8b-428e-acbb-a23aa6838ba8",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "content": "Ad Background Scraper",
+        "height": 260,
+        "width": 440
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -256,
+        64
+      ],
+      "id": "a1da6ae0-b1c1-48d8-bff9-0008a8cbe7b2",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "UGC Avatar Generator",
+        "height": 420,
+        "width": 2940
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -256,
+        400
+      ],
+      "id": "cf4cadf4-4651-4aa1-8d0a-7936040743d8",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "Video Editing (Optional)",
+        "height": 320,
+        "width": 1520
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -256,
+        912
+      ],
+      "id": "6a549dc0-f8db-4e82-a572-d47cba235352",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1p5vUzVz1xlRCjCK0twh-ugwXMmnNCCN8WbchuWoLI4g/edit?gid=1603620103#gid=1603620103",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 199071436,
+          "mode": "list",
+          "cachedResultName": "Tiktok Scraper",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1p5vUzVz1xlRCjCK0twh-ugwXMmnNCCN8WbchuWoLI4g/edit#gid=199071436"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "video URL": "={{ $json.videoMeta.downloadAddr }}"
+          },
+          "matchingColumns": [
+            "video URL"
+          ],
+          "schema": [
+            {
+              "id": "video URL",
+              "displayName": "video URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -16,
+        144
+      ],
+      "id": "af0527ec-bc00-49ac-919d-db0a73eec5e6",
+      "name": "Save URLs1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Guh2LBM6ab2x6twx",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1p5vUzVz1xlRCjCK0twh-ugwXMmnNCCN8WbchuWoLI4g/edit?gid=1603620103#gid=1603620103",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1603620103,
+          "mode": "list",
+          "cachedResultName": "UGC",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1p5vUzVz1xlRCjCK0twh-ugwXMmnNCCN8WbchuWoLI4g/edit#gid=1603620103"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Product": "={{ $('Input1').item.json['Product Name'] }}",
+            "Angle": "={{ $json.angle }}",
+            "product description": "={{ $('Product Description1').item.json.output.productDescription }}",
+            "Hashtag": "={{ $('Input1').item.json.Hashtag }}",
+            "Script": "={{ $json.script }}",
+            "caption": "={{ $json.caption }}",
+            "Scene": "={{ $json.scene }}",
+            "avatar style": "={{ $json.avatarStyle }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Product",
+              "displayName": "Product",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Angle",
+              "displayName": "Angle",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "product description",
+              "displayName": "product description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Hashtag",
+              "displayName": "Hashtag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Script",
+              "displayName": "Script",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "caption",
+              "displayName": "caption",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Scene",
+              "displayName": "Scene",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "avatar style",
+              "displayName": "avatar style",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "avatar id",
+              "displayName": "avatar id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "avatar url",
+              "displayName": "avatar url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1168,
+        432
+      ],
+      "id": "102a142b-ccd3-4f1f-bf95-6ea2f5bbbbc8",
+      "name": "Save UGC Info1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Guh2LBM6ab2x6twx",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Search the connected Google Sheet. Each row contains avatar voice information, including a \"description\" column that describes the voice type, tone, and style (e.g., \"20s, casual sports attire, enthusiastic tone with a competitive edge\"). The input \"Avatar Style\" may describe similar traits in different words. Perform a semantic match — focus on overall meaning, tone, age group, and personality. Case-insensitive. Return the row that most closely aligns in meaning, even if the wording is different.\n\ngiven Avatar Style : {{ $('Split Out1').item.json.avatarStyle }}\n\nThis is an exemple of structure format , return 1 per item\n\n{\n  \"response\": [\n    {\n      \"row_number\": 2,\n      \"Name\": \"Linda\",\n      \"template id\": \"Maroal_CasualLook_public\",\n      \"voice id\": \"3ec2466e4d2847a88e9c10b8cf58e1cb\",\n      \"description\": \"Young Woman\"\n    },\n    {\n      \"row_number\": 5,\n      \"Name\": \"George\",\n      \"template id\": \"Mark_FitnessCoach_public\",\n      \"voice id\": \"e6baf4892d344b61a7033502899208ff\",\n      \"description\": \"Middle-aged Man\"\n    },\n    {...}\n  ]\n}",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        1344,
+        432
+      ],
+      "id": "d6bce6ce-1c9d-4730-bf2d-69151d2a155c",
+      "name": "Qualify Avatar1",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.heygen.com/v2/video/generate",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Api-Key",
+              "value": ""
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"video_inputs\": [\n    {\n      \"character\": {\n        \"type\": \"avatar\",\n        \"avatar_id\": \"{{ $json.output.response[0]['template id'] }}\",\n        \"avatar_style\": \"normal\"\n      },\n      \"voice\": {\n        \"type\": \"text\",\n        \"input_text\": \"{{ $('Split Out1').item.json.script }}\",\n        \"voice_id\": \"{{ $json.output.response[0]['voice id'] }}\",\n        \"speed\": 1.1\n      }\n    }\n  ],\n  \"dimension\": {\n    \"width\": 1280,\n    \"height\": 720\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1888,
+        432
+      ],
+      "id": "e0fb5af2-dc6f-4306-bd03-220ce084ba2d",
+      "name": "Create UGC1",
+      "retryOnFail": true,
+      "waitBetweenTries": 3000,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1p5vUzVz1xlRCjCK0twh-ugwXMmnNCCN8WbchuWoLI4g/edit?gid=1603620103#gid=1603620103",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1603620103,
+          "mode": "list",
+          "cachedResultName": "UGC",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1p5vUzVz1xlRCjCK0twh-ugwXMmnNCCN8WbchuWoLI4g/edit#gid=1603620103"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "avatar id": "={{ $json.data.video_id }}",
+            "avatar url": "=",
+            "Script": "={{ $('Save UGC Info').item.json.Script }}"
+          },
+          "matchingColumns": [
+            "Script"
+          ],
+          "schema": [
+            {
+              "id": "Product",
+              "displayName": "Product",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Angle",
+              "displayName": "Angle",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "product description",
+              "displayName": "product description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Hashtag",
+              "displayName": "Hashtag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Script",
+              "displayName": "Script",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "caption",
+              "displayName": "caption",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Scene",
+              "displayName": "Scene",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "avatar style",
+              "displayName": "avatar style",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "avatar id",
+              "displayName": "avatar id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "avatar url",
+              "displayName": "avatar url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        2272,
+        160
+      ],
+      "id": "cf61c6ed-9357-4ded-a768-836751874d18",
+      "name": "Save video ID1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Guh2LBM6ab2x6twx",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.heygen.com/v1/video_status.get?video_id={{ $json.data.video_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            },
+            {
+              "name": "x-api-key",
+              "value": ""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2288,
+        432
+      ],
+      "id": "435e4463-edf8-404e-b5ad-4b15d4aa849e",
+      "name": "GET UGC1",
+      "retryOnFail": true,
+      "alwaysOutputData": true,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1p5vUzVz1xlRCjCK0twh-ugwXMmnNCCN8WbchuWoLI4g/edit?gid=1603620103#gid=1603620103",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1603620103,
+          "mode": "list",
+          "cachedResultName": "UGC",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1p5vUzVz1xlRCjCK0twh-ugwXMmnNCCN8WbchuWoLI4g/edit#gid=1603620103"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "avatar url": "={{ $json.data.video_url }}",
+            "row_number": "="
+          },
+          "matchingColumns": [
+            "avatar id"
+          ],
+          "schema": [
+            {
+              "id": "Product",
+              "displayName": "Product",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Angle",
+              "displayName": "Angle",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "product description",
+              "displayName": "product description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Hashtag",
+              "displayName": "Hashtag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Script",
+              "displayName": "Script",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "caption",
+              "displayName": "caption",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Scene",
+              "displayName": "Scene",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "avatar style",
+              "displayName": "avatar style",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "avatar id",
+              "displayName": "avatar id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "avatar url",
+              "displayName": "avatar url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        2480,
+        432
+      ],
+      "id": "ccc839c2-7823-4aa6-bdea-b237a6dd0c02",
+      "name": "Save UGC URL1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Guh2LBM6ab2x6twx",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resume": "form",
+        "formTitle": "Variables",
+        "formDescription": "Copy Paste The Best Fit From Google Sheets",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "BG URL",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "UGC URL",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -208,
+        1008
+      ],
+      "id": "24be8be9-e024-4319-bfe5-0c8b21f9f14a",
+      "name": "Upload the Chosen URL1",
+      "webhookId": "8bce3695-c588-40b9-9240-4a940fbd0ae8"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.json2video.com/v2/movies",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": ""
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"id\": \"\",\n    \"comment\": \"Empty movie\",\n    \"resolution\": \"instagram-feed\",\n    \"quality\": \"high\",\n    \"scenes\": [\n        {\n            \"id\": \"YeNU2xCtUhbc1Lb2RcKybf970uc2jbPNiZXt9BF4\",\n            \"comment\": \"Scene 1\",\n            \"elements\": [\n                {\n                    \"id\": \"YeNU2xCtUhbc1Lb2RcKybf970uc2jbPNiZXt9BF4\",\n                    \"type\": \"video\",\n                    \"src\": \"{{ $json['BG URL'] }}\",\n                    \"width\": 1080,\n                    \"height\": 1920,\n                    \"x\": 0,\n                    \"y\": 0,\n                    \"muted\": true\n                },\n                {\n                    \"id\": \"YeNU2xCtUhbc1Lb2RcKybf970uc2jbPNiZXt9BF4\",\n                    \"type\": \"video\",\n                    \"src\": \"{{ $json['UGC URL'] }}\",\n                    \"position\": \"custom\",\n                    \"x\": 365,\n                    \"height\": null,              \n                    \"pan\": null,\n                    \"correction\": {},\n                    \"start\": 0,\n                    \"width\": 720\n                }\n            ],\n            \"cache\": false\n        }\n    ],\n    \"elements\": [],\n    \"width\": 1080,\n    \"height\": 1350\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        32,
+        1008
+      ],
+      "id": "577ed095-e4a1-4261-b992-3f3d9fe82c77",
+      "name": "Ad Editing1",
+      "retryOnFail": true,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.json2video.com/v2/movies?project={{ $json.project }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": ""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        432,
+        1008
+      ],
+      "id": "de198f3a-e584-4862-81a2-1735839de08c",
+      "name": "Get Ad1"
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "movie.url",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        640,
+        1008
+      ],
+      "id": "89fae99c-9b3f-40b3-90de-fd86ca01fa1a",
+      "name": "Convert to File1"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        1008
+      ],
+      "id": "25295a86-d8fa-40a4-a9cc-7f1a40cc0dd0",
+      "name": "Wait2",
+      "webhookId": "b2ba0227-b99b-4fff-9c85-ab22905ca41d"
+    },
+    {
+      "parameters": {
+        "amount": "={{ $('Input1').item.json.Angles *2}}",
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2080,
+        432
+      ],
+      "id": "c6db0e5a-9777-45f8-9da0-8a39726acede",
+      "name": "Wait3",
+      "webhookId": "7c406eef-4ae4-4b11-b8a0-5a256a3de4fd"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"matchedAvatar\": [\n    {\n      \"row_number\": 2,\n      \"Name\": \"Linda\",\n      \"template id\": \"1fdd5933932842c5a090017ea8f59eb9\",\n      \"voice id\": \"3ec2466e4d2847a88e9c10b8cf58e1cb\",\n      \"description\": \"Young Woman\"\n    }\n  ]\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1568,
+        672
+      ],
+      "id": "247b6ec2-8903-42d5-a5c8-e4ad05eff615",
+      "name": "Structured Output Parser5"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/clockworks~tiktok-scraper/run-sync-get-dataset-items?token=",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"hashtags\": [\n    \"{{ $('Input1').item.json.Hashtag }}\"\n  ],\n  \"resultsPerPage\": 10,\n  \"profileScrapeSections\": [\n    \"videos\"\n  ],\n  \"profileSorting\": \"latest\",\n  \"excludePinnedPosts\": false,\n  \"searchSection\": \"\",\n  \"maxProfilesPerQuery\": 1,\n  \"shouldDownloadVideos\": true,\n  \"shouldDownloadCovers\": false,\n  \"shouldDownloadSubtitles\": false,\n  \"shouldDownloadSlideshowImages\": false,\n  \"shouldDownloadAvatars\": false,\n  \"shouldDownloadMusicCovers\": false,\n  \"proxyCountryCode\": \"None\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -208,
+        144
+      ],
+      "id": "21cd3c79-4731-4f56-bbc0-0862a40e7b05",
+      "name": "Apify Tiktok Scraper1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f68291ca-8431-4233-b927-69ce36f1153a",
+              "name": "video_id",
+              "value": "={{ $json.data.video_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2528,
+        160
+      ],
+      "id": "11f348a0-c2db-44bd-af4c-45d837dfe767",
+      "name": "Edit Fields4"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.productDescription }}",
+                    "rightValue": "1",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    },
+                    "id": "9074fe34-1a73-4fa1-9e45-84b725a129f1"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Fine"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "9638bd22-6000-40a4-b3d7-6ef07007e43a",
+                    "leftValue": "={{ $json.output.productDescription }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "empty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Error"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        128,
+        464
+      ],
+      "id": "f1136a08-ecd2-4ed6-ae06-6009c638f6e3",
+      "name": "Error Handler2"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.Ads }}",
+                    "rightValue": "={{ $('Input1').item.json.Angles }}",
+                    "operator": {
+                      "type": "array",
+                      "operation": "lengthEquals",
+                      "rightType": "number"
+                    },
+                    "id": "c3f3f8cf-b207-4ec5-b352-a80335d0938d"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Fine"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "80d6f5d2-7118-4a0c-8414-4e1346aca8b2",
+                    "leftValue": "={{ $json.output.Ads }}",
+                    "rightValue": "={{ $('Input1').item.json.Angles }}",
+                    "operator": {
+                      "type": "array",
+                      "operation": "lengthNotEquals",
+                      "rightType": "number"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Error"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        752,
+        448
+      ],
+      "id": "1d684f77-d28c-4fef-99ed-fb1e13ad3ae9",
+      "name": "Error Handler3"
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "=data",
+        "name": "ad2",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "https://drive.google.com/drive/u/0/folders/15jmkH5W2AC29gmZ2HZwY0FVIrKg29FWs",
+          "mode": "url"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        848,
+        1008
+      ],
+      "id": "900733c8-047e-42d8-8b24-94180c3d3f74",
+      "name": "Upload to Google Drive1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "oeyShv0IpU25bjfC",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cd3ac2f2-8f2e-4184-9530-8b511e00fd42",
+              "name": "Product Name",
+              "value": "={{ $json['Product Name'] }}",
+              "type": "string"
+            },
+            {
+              "id": "ea4ff994-1293-41bb-8964-e490f5b0a1ac",
+              "name": "Angles",
+              "value": "={{ $json['Angle Required'] }}",
+              "type": "number"
+            },
+            {
+              "id": "9086007d-3dd9-4937-9cf4-402a94d36765",
+              "name": "Hashtag",
+              "value": "={{ $json.Hashtag }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -464,
+        544
+      ],
+      "id": "4de40004-40d0-45cc-9810-455120efb078",
+      "name": "Input1"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "This tool reads data from a Google Sheet. Each row contains information about voice avatars, including a \"description\" column. Use this tool to search for the row where the \"description\" value closely matches the provided avatar style input. Once the best match is found, retrieve that entire row (including columns like Name, template id, voice id, and row_number). Only return a single best match row as a JSON object.\n",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1p5vUzVz1xlRCjCK0twh-ugwXMmnNCCN8WbchuWoLI4g/edit?gid=1603620103#gid=1603620103",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 654019907,
+          "mode": "list",
+          "cachedResultName": "HeyGen",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1p5vUzVz1xlRCjCK0twh-ugwXMmnNCCN8WbchuWoLI4g/edit#gid=654019907"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.6,
+      "position": [
+        1440,
+        688
+      ],
+      "id": "4e64e10f-e978-4357-83d1-5be43ead3324",
+      "name": "Avatars",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Guh2LBM6ab2x6twx",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission1": {
+      "main": [
+        [
+          {
+            "node": "Input1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Voice Over Script + Ad Copy1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Product Description1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser3": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Product Description1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser4": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Voice Over Script + Ad Copy1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "Save UGC Info1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Voice Over Script + Ad Copy1": {
+      "main": [
+        [
+          {
+            "node": "Error Handler3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Product Description1": {
+      "main": [
+        [
+          {
+            "node": "Error Handler2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model5": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Qualify Avatar1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Create UGC1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save UGC Info1": {
+      "main": [
+        [
+          {
+            "node": "Qualify Avatar1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qualify Avatar1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create UGC1": {
+      "main": [
+        [
+          {
+            "node": "Wait3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save video ID1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET UGC1": {
+      "main": [
+        [
+          {
+            "node": "Save UGC URL1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload the Chosen URL1": {
+      "main": [
+        [
+          {
+            "node": "Ad Editing1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ad Editing1": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Ad1": {
+      "main": [
+        [
+          {
+            "node": "Convert to File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File1": {
+      "main": [
+        [
+          {
+            "node": "Upload to Google Drive1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "Get Ad1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait3": {
+      "main": [
+        [
+          {
+            "node": "GET UGC1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser5": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Qualify Avatar1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apify Tiktok Scraper1": {
+      "main": [
+        [
+          {
+            "node": "Save URLs1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        []
+      ]
+    },
+    "Error Handler2": {
+      "main": [
+        [
+          {
+            "node": "Voice Over Script + Ad Copy1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Product Description1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Handler3": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Voice Over Script + Ad Copy1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Input1": {
+      "main": [
+        [
+          {
+            "node": "Upload the Chosen URL1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Apify Tiktok Scraper1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Product Description1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avatars": {
+      "ai_tool": [
+        [
+          {
+            "node": "Qualify Avatar1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "767b3c08-3b59-4d3d-8d20-71a812309738",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "563081422b97a9613202fc9e330444d764a4b838aee8c810ae24b64e312e87c7"
+  },
+  "id": "Eq5g3XV4uXCdnpAZ",
+  "tags": []
+}
